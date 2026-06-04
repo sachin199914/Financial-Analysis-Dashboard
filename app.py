@@ -197,17 +197,24 @@ def format_metric_value(val, unit, metric_name=None):
 st.markdown('<div class="dashboard-title">Comparative Financial Analysis</div>', unsafe_allow_html=True)
 st.markdown('<div class="dashboard-subtitle">SEC Filing Auditable Traceability & Performance Dashboard (NVIDIA • AMD • Intel)</div>', unsafe_allow_html=True)
 
-# Define Tabs
-tab_overview, tab_charts, tab_evidence, tab_insights, tab_rag = st.tabs([
-    "📊 Overview & Scope",
-    "📈 Comparative Analysis",
-    "🔍 Metric Evidence & Traceability",
-    "💡 Automated Insights",
-    "💬 RAG Chat Assistant"
-])
+TAB_OPTIONS = [
+    "Overview & Scope",
+    "Comparative Analysis",
+    "Metric Evidence & Traceability",
+    "Automated Insights",
+    "RAG Chat Assistant",
+]
+
+selected_tab = st.radio(
+    "Dashboard section",
+    TAB_OPTIONS,
+    horizontal=True,
+    label_visibility="collapsed",
+    key="selected_dashboard_section",
+)
 
 # ==================== TAB 1: OVERVIEW & SCOPE ====================
-with tab_overview:
+if selected_tab == "Overview & Scope":
     st.markdown("### Executive Summary")
     st.write(
         "This platform analyzes and compares the audited financial performance of "
@@ -293,7 +300,7 @@ with tab_overview:
             st.success("No extraction gaps cataloged. Clean tags found across all documents.")
 
 # ==================== TAB 2: COMPARATIVE ANALYSIS ====================
-with tab_charts:
+if selected_tab == "Comparative Analysis":
     st.markdown("### Comparative Performance & Financial Ratios")
     st.write("Benchmark performance, profitability, growth, and leverage dynamically across competitors and years.")
     
@@ -410,7 +417,7 @@ with tab_charts:
         st.plotly_chart(fig_lev, use_container_width=True)
 
 # ==================== TAB 3: METRIC EVIDENCE & TRACEABILITY ====================
-with tab_evidence:
+if selected_tab == "Metric Evidence & Traceability":
     st.markdown("### Document Audit Trail & Metric Verification")
     st.write(
         "Trace every single financial figure back to its exact location in the SEC source filing. "
@@ -517,7 +524,7 @@ with tab_evidence:
                 )
 
 # ==================== TAB 4: AUTOMATED INSIGHTS ====================
-with tab_insights:
+if selected_tab == "Automated Insights":
     st.markdown("### Automated Peer Performance Benchmarking")
     st.write(
         "Grounded, rule-based observations generated automatically from the extracted financial metrics "
@@ -632,7 +639,7 @@ with tab_insights:
         st.table(pd.DataFrame(matrix_data).set_index("Company"))
 
 # ==================== TAB 5: RAG CHAT ASSISTANT ====================
-with tab_rag:
+if selected_tab == "RAG Chat Assistant":
     st.markdown("### Grounded SEC Filing Q&A Assistant")
     st.write(
         "Ask natural-language questions about company financial metrics or narrative commentary. "

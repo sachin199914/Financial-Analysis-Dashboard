@@ -347,7 +347,7 @@ def answer_question(question: str) -> str:
         else:
             from langchain_google_genai import ChatGoogleGenerativeAI
             llm = ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",
+                model="gemini-3.1-flash-lite",
                 temperature=0.0,
                 google_api_key=api_key_gemini,
                 max_retries=0
@@ -358,7 +358,17 @@ def answer_question(question: str) -> str:
         for attempt in range(3):
             try:
                 response = chain.invoke({"context": full_context, "question": question})
-                return response.content
+                content = response.content
+                # Handle structured content (list of parts) from newer Gemini models
+                if isinstance(content, list):
+                    text_parts = []
+                    for part in content:
+                        if isinstance(part, dict) and "text" in part:
+                            text_parts.append(part["text"])
+                        elif isinstance(part, str):
+                            text_parts.append(part)
+                    return "\n".join(text_parts) if text_parts else str(content)
+                return content
             except Exception as exc:
                 last_error = exc
                 if not is_rate_limit_error(exc) or attempt == 2:
