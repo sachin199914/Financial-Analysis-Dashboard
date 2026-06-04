@@ -318,7 +318,8 @@ def answer_question(question: str) -> str:
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             temperature=0.0,
-            google_api_key=api_key
+            google_api_key=api_key,
+            transport="rest"
         )
         
         chain = prompt | llm
