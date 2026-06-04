@@ -7,6 +7,7 @@ lxml
 sec-edgar-downloader
 langchain
 langchain-community
+langchain-text-splitters
 chromadb
 sentence-transformers
 python-dotenv

@@ -27,6 +27,7 @@ VECTORSTORE_NOT_READY_MESSAGE = (
     "The narrative filing index is not available in this environment, so I cannot retrieve management commentary. "
     "I can still answer from the verified metric catalog below."
 )
+VECTORSTORE_DB_FILE = VECTORSTORE_DIR / "chroma.sqlite3"
 
 METRIC_ALIASES = {
     "revenue": ["revenue", "sales"],
@@ -52,10 +53,28 @@ db = None
 extracted_df = None
 derived_df = None
 
+def vectorstore_ready() -> bool:
+    return VECTORSTORE_DB_FILE.exists()
+
+def build_vectorstore_if_missing() -> bool:
+    """Build the local Chroma index on demand for hosted environments."""
+    global embeddings, db
+    if vectorstore_ready():
+        return True
+    try:
+        from src.rag_ingest import main as build_index
+
+        build_index()
+        embeddings = None
+        db = None
+        return vectorstore_ready()
+    except Exception:
+        return False
+
 def init_resources():
     global embeddings, db, extracted_df, derived_df
     if db is None:
-        if VECTORSTORE_DIR.exists():
+        if vectorstore_ready():
             embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             db = Chroma(persist_directory=str(VECTORSTORE_DIR), embedding_function=embeddings)
         else:
@@ -288,8 +307,8 @@ def answer_explanation_from_metric_catalog(question: str, filters: dict) -> str 
         return None
 
     lines.append(
-        "- To answer the qualitative 'why' with management commentary, include/build `data/vectorstore/` "
-        "or run `python3 src/rag_ingest.py` before launching the app."
+        "- I could not access the qualitative management-commentary index. The deployed app will try to build it automatically; "
+        "if this message persists, the host likely hit a dependency, memory, or startup-time limit."
     )
     return "\n".join(lines)
 
@@ -339,7 +358,10 @@ def answer_question(question: str) -> str:
     if catalog_answer is not None:
         return catalog_answer
 
-    if is_explanation_question(question) and not VECTORSTORE_DIR.exists():
+    if not vectorstore_ready():
+        build_vectorstore_if_missing()
+
+    if is_explanation_question(question) and not vectorstore_ready():
         fallback_answer = answer_explanation_from_metric_catalog(question, filters)
         if fallback_answer is not None:
             return fallback_answer
@@ -362,8 +384,8 @@ def answer_question(question: str) -> str:
         if fallback_answer is not None:
             return fallback_answer
         return (
-            "The narrative filing index is not available in this environment. "
-            "Please build it with `python3 src/rag_ingest.py`, or ask a direct metric question."
+            "The narrative filing index is not available in this environment, and the app could not build it automatically. "
+            "Ask a direct metric question, or check the deployment logs for dependency, memory, or startup-time errors."
         )
         
     # Construct Chroma filter
