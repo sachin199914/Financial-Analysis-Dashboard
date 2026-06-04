@@ -23,6 +23,10 @@ TEMPORARY_UNAVAILABLE_MESSAGE = (
     "The filing Q&A service is temporarily unavailable because the LLM provider is rate-limited. "
     "Please retry in a minute, or ask a direct metric question that can be answered from the local metric catalog."
 )
+VECTORSTORE_NOT_READY_MESSAGE = (
+    "The narrative filing index is not available in this environment, so I cannot retrieve management commentary. "
+    "I can still answer from the verified metric catalog below."
+)
 
 METRIC_ALIASES = {
     "revenue": ["revenue", "sales"],
@@ -222,6 +226,73 @@ def answer_from_metric_catalog(question: str, filters: dict) -> str | None:
 
     return "Answered from the verified local metric catalog:\n" + "\n".join(answers)
 
+def answer_explanation_from_metric_catalog(question: str, filters: dict) -> str | None:
+    """Fallback for why/explain questions when narrative Chroma retrieval is unavailable."""
+    init_resources()
+    if extracted_df is None or derived_df is None:
+        return None
+    if "ticker" not in filters or "fiscal_year" not in filters:
+        return None
+
+    requested_metrics = detect_requested_metrics(question)
+    if not requested_metrics:
+        return None
+
+    ticker = filters["ticker"]
+    fiscal_year = filters["fiscal_year"]
+    lines = [VECTORSTORE_NOT_READY_MESSAGE]
+
+    for metric in requested_metrics:
+        current = extracted_df[
+            (extracted_df["ticker"] == ticker)
+            & (extracted_df["fiscal_year"] == fiscal_year)
+            & (extracted_df["metric"] == metric)
+        ]
+        prior = extracted_df[
+            (extracted_df["ticker"] == ticker)
+            & (extracted_df["fiscal_year"] == fiscal_year - 1)
+            & (extracted_df["metric"] == metric)
+        ]
+        derived_current = derived_df[
+            (derived_df["ticker"] == ticker)
+            & (derived_df["fiscal_year"] == fiscal_year)
+            & (derived_df["metric"] == metric)
+        ]
+
+        if not current.empty:
+            row = current.iloc[0]
+            value = format_catalog_value(float(row["value"]), row["unit"], metric)
+            lines.append(
+                f"- {row['company']} FY{fiscal_year} {metric.replace('_', ' ')} was {value}. "
+                f"Source: {row['source_file']} ({row['source_section']}). Quote: \"{row['source_quote']}\""
+            )
+            if not prior.empty:
+                prior_row = prior.iloc[0]
+                current_value = float(row["value"])
+                prior_value = float(prior_row["value"])
+                if prior_value:
+                    change = (current_value - prior_value) / prior_value
+                    lines.append(
+                        f"- The year-over-year change was {change:.4f} ({change * 100:.2f}%), "
+                        f"from {format_catalog_value(prior_value, prior_row['unit'], metric)} in FY{fiscal_year - 1}."
+                    )
+        elif not derived_current.empty:
+            row = derived_current.iloc[0]
+            value = format_catalog_value(float(row["value"]), row["unit"], metric)
+            lines.append(
+                f"- {row['company']} FY{fiscal_year} {metric.replace('_', ' ')} was {value}. "
+                f"Formula: {row['formula']}."
+            )
+
+    if len(lines) == 1:
+        return None
+
+    lines.append(
+        "- To answer the qualitative 'why' with management commentary, include/build `data/vectorstore/` "
+        "or run `python3 src/rag_ingest.py` before launching the app."
+    )
+    return "\n".join(lines)
+
 def is_rate_limit_error(exc: Exception) -> bool:
     text = str(exc).lower()
     return any(token in text for token in ["429", "resource_exhausted", "rate limit", "quota"])
@@ -268,6 +339,11 @@ def answer_question(question: str) -> str:
     if catalog_answer is not None:
         return catalog_answer
 
+    if is_explanation_question(question) and not VECTORSTORE_DIR.exists():
+        fallback_answer = answer_explanation_from_metric_catalog(question, filters)
+        if fallback_answer is not None:
+            return fallback_answer
+
     # Check for API key (OpenAI or Gemini)
     api_key_openai = os.environ.get("OPENAI_API_KEY")
     api_key_gemini = os.environ.get("GEMINI_API_KEY")
@@ -282,7 +358,13 @@ def answer_question(question: str) -> str:
         
     init_resources()
     if db is None:
-        return "⚠️ Chroma database has not been initialized. Please run `python3 src/rag_ingest.py` first."
+        fallback_answer = answer_explanation_from_metric_catalog(question, filters)
+        if fallback_answer is not None:
+            return fallback_answer
+        return (
+            "The narrative filing index is not available in this environment. "
+            "Please build it with `python3 src/rag_ingest.py`, or ask a direct metric question."
+        )
         
     # Construct Chroma filter
     chroma_filter = None
