@@ -1,0 +1,10 @@
+company,ticker,filing_type,fiscal_year,filing_date,accession_number,sec_url,local_path
+NVIDIA,NVDA,10-K,2022,2022-03-18,0001045810-22-000036,https://www.sec.gov/Archives/edgar/data/1045810/000104581022000036/nvda-20220130.htm,data/filings/NVDA_2022_10K.htm
+NVIDIA,NVDA,10-K,2023,2023-02-24,0001045810-23-000017,https://www.sec.gov/Archives/edgar/data/1045810/000104581023000017/nvda-20230129.htm,data/filings/NVDA_2023_10K.htm
+NVIDIA,NVDA,10-K,2024,2024-02-21,0001045810-24-000029,https://www.sec.gov/Archives/edgar/data/1045810/000104581024000029/nvda-20240128.htm,data/filings/NVDA_2024_10K.htm
+AMD,AMD,10-K,2022,2023-02-27,0000002488-23-000047,https://www.sec.gov/Archives/edgar/data/2488/000000248823000047/amd-20221231.htm,data/filings/AMD_2022_10K.htm
+AMD,AMD,10-K,2023,2024-01-31,0000002488-24-000012,https://www.sec.gov/Archives/edgar/data/2488/000000248824000012/amd-20231230.htm,data/filings/AMD_2023_10K.htm
+AMD,AMD,10-K,2024,2025-02-05,0000002488-25-000012,https://www.sec.gov/Archives/edgar/data/2488/000000248825000012/amd-20241228.htm,data/filings/AMD_2024_10K.htm
+Intel,INTC,10-K,2022,2023-01-27,0000050863-23-000006,https://www.sec.gov/Archives/edgar/data/50863/000005086323000006/intc-20221231.htm,data/filings/INTC_2022_10K.htm
+Intel,INTC,10-K,2023,2024-01-26,0000050863-24-000010,https://www.sec.gov/Archives/edgar/data/50863/000005086324000010/intc-20231230.htm,data/filings/INTC_2023_10K.htm
+Intel,INTC,10-K,2024,2025-01-31,0000050863-25-000009,https://www.sec.gov/Archives/edgar/data/50863/000005086325000009/intc-20241228.htm,data/filings/INTC_2024_10K.htm
