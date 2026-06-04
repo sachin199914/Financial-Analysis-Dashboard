@@ -1,2 +1,16 @@
 id,question,answer_correct,citation_accurate,refused_when_unanswerable,hallucination,notes
-
+1,What was NVIDIA's revenue and gross profit in fiscal 2024?,True,True,False,False,Answer matched expected content: True | Cited: True
+2,What was AMD's gross profit and net income in 2023?,True,True,False,False,Answer matched expected content: True | Cited: True
+3,What was Intel's operating income in 2022?,True,True,False,False,Answer matched expected content: True | Cited: True
+4,What was AMD's free cash flow in 2024?,True,True,False,False,Answer matched expected content: True | Cited: True
+5,What was Intel's liabilities-to-equity ratio in 2023?,False,False,False,True,Answer matched expected content: False | Cited: False
+6,What was NVIDIA's operating margin in 2024?,False,False,False,True,Answer matched expected content: False | Cited: False
+7,What reason did Intel give for its lower gross margins in 2024?,True,True,False,False,Answer matched expected content: True | Cited: True
+8,What did AMD management say about their R&D investments in 2024?,False,False,True,False,Answer matched expected content: False | Cited: False
+9,How did NVIDIA's Datacenter segment perform in 2024 according to management?,True,True,False,False,Answer matched expected content: True | Cited: True
+10,What was Apple's revenue in 2024?,True,True,True,False,Answer matched expected content: True | Cited: True
+11,What was NVIDIA's market capitalization in fiscal 2020?,True,True,True,False,Answer matched expected content: True | Cited: True
+12,What was Intel's exact CPU unit sales volume in 2024?,True,True,True,False,Answer matched expected content: True | Cited: True
+13,What was AMD's total employee count in 2020?,False,False,False,True,Answer matched expected content: False | Cited: False
+14,What was Google's net income in 2023?,True,True,True,False,Answer matched expected content: True | Cited: True
+15,What was the weather like in Santa Clara in 2024?,True,True,True,False,Answer matched expected content: True | Cited: True

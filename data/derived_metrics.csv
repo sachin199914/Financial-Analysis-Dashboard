@@ -1,0 +1,50 @@
+company,ticker,fiscal_year,metric,value,unit,formula
+AMD,AMD,2022,gross_margin,0.449261,ratio,gross_profit / revenue
+AMD,AMD,2022,operating_margin,0.053557,ratio,operating_income / revenue
+AMD,AMD,2022,net_margin,0.055930,ratio,net_income / revenue
+AMD,AMD,2022,free_cash_flow,3115000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+AMD,AMD,2022,liabilities_to_equity,0.234338,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+AMD,AMD,2023,gross_margin,0.461199,ratio,gross_profit / revenue
+AMD,AMD,2023,operating_margin,0.017681,ratio,operating_income / revenue
+AMD,AMD,2023,net_margin,0.037654,ratio,net_income / revenue
+AMD,AMD,2023,revenue_growth_yoy,-0.039024,ratio,(revenue - prior_year_revenue) / prior_year_revenue
+AMD,AMD,2023,free_cash_flow,1121000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+AMD,AMD,2023,liabilities_to_equity,0.214575,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+AMD,AMD,2024,gross_margin,0.493504,ratio,gross_profit / revenue
+AMD,AMD,2024,operating_margin,0.073686,ratio,operating_income / revenue
+AMD,AMD,2024,net_margin,0.063642,ratio,net_income / revenue
+AMD,AMD,2024,revenue_growth_yoy,0.136905,ratio,(revenue - prior_year_revenue) / prior_year_revenue
+AMD,AMD,2024,free_cash_flow,2405000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+AMD,AMD,2024,liabilities_to_equity,0.202508,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+Intel,INTC,2022,gross_margin,0.426079,ratio,gross_profit / revenue
+Intel,INTC,2022,operating_margin,0.037016,ratio,operating_income / revenue
+Intel,INTC,2022,net_margin,0.127097,ratio,net_income / revenue
+Intel,INTC,2022,free_cash_flow,-9411000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+Intel,INTC,2022,liabilities_to_equity,0.795480,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+Intel,INTC,2023,gross_margin,0.400365,ratio,gross_profit / revenue
+Intel,INTC,2023,operating_margin,0.001715,ratio,operating_income / revenue
+Intel,INTC,2023,net_margin,0.031146,ratio,net_income / revenue
+Intel,INTC,2023,revenue_growth_yoy,-0.139975,ratio,(revenue - prior_year_revenue) / prior_year_revenue
+Intel,INTC,2023,free_cash_flow,-14279000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+Intel,INTC,2023,liabilities_to_equity,0.814301,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+Intel,INTC,2024,gross_margin,0.326642,ratio,gross_profit / revenue
+Intel,INTC,2024,operating_margin,-0.219921,ratio,operating_income / revenue
+Intel,INTC,2024,net_margin,-0.353214,ratio,net_income / revenue
+Intel,INTC,2024,revenue_growth_yoy,-0.020783,ratio,(revenue - prior_year_revenue) / prior_year_revenue
+Intel,INTC,2024,free_cash_flow,-15656000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+Intel,INTC,2024,liabilities_to_equity,0.979299,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+NVIDIA,NVDA,2022,gross_margin,0.649290,ratio,gross_profit / revenue
+NVIDIA,NVDA,2022,operating_margin,0.373077,ratio,operating_income / revenue
+NVIDIA,NVDA,2022,net_margin,0.362339,ratio,net_income / revenue
+NVIDIA,NVDA,2022,liabilities_to_equity,0.660416,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+NVIDIA,NVDA,2023,gross_margin,0.569289,ratio,gross_profit / revenue
+NVIDIA,NVDA,2023,operating_margin,0.156595,ratio,operating_income / revenue
+NVIDIA,NVDA,2023,net_margin,0.161934,ratio,net_income / revenue
+NVIDIA,NVDA,2023,revenue_growth_yoy,0.002229,ratio,(revenue - prior_year_revenue) / prior_year_revenue
+NVIDIA,NVDA,2023,liabilities_to_equity,0.863355,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged
+NVIDIA,NVDA,2024,gross_margin,0.727176,ratio,gross_profit / revenue
+NVIDIA,NVDA,2024,operating_margin,0.541217,ratio,operating_income / revenue
+NVIDIA,NVDA,2024,net_margin,0.488493,ratio,net_income / revenue
+NVIDIA,NVDA,2024,revenue_growth_yoy,1.258545,ratio,(revenue - prior_year_revenue) / prior_year_revenue
+NVIDIA,NVDA,2024,free_cash_flow,27021000000.000000,USD,operating_cash_flow - abs(capital_expenditures)
+NVIDIA,NVDA,2024,liabilities_to_equity,0.529341,ratio,total_liabilities / stockholders_equity; liabilities derived as assets - equity when not directly tagged

@@ -1,0 +1,9 @@
+company,ticker,fiscal_year,metric,issue
+NVIDIA,NVDA,2022,capital_expenditures,No annual unsegmented fact found
+NVIDIA,NVDA,2023,capital_expenditures,No annual unsegmented fact found
+AMD,AMD,2022,total_liabilities,No annual unsegmented fact found
+AMD,AMD,2023,total_liabilities,No annual unsegmented fact found
+AMD,AMD,2024,total_liabilities,No annual unsegmented fact found
+Intel,INTC,2022,total_liabilities,No annual unsegmented fact found
+Intel,INTC,2023,total_liabilities,No annual unsegmented fact found
+Intel,INTC,2024,total_liabilities,No annual unsegmented fact found

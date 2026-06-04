@@ -1,2 +1,16 @@
 id,question,expected_answer_type,expected_source,notes
-
+1,What was NVIDIA's revenue and gross profit in fiscal 2024?,lookup,"60,922, 44,301, NVDA_2024_10K.htm",Verify direct lookup and citations for NVDA 2024.
+2,What was AMD's gross profit and net income in 2023?,lookup,"10,460, 854, AMD_2023_10K.htm",Verify AMD 2023 gross profit and net income facts.
+3,What was Intel's operating income in 2022?,lookup,"2,334, INTC_2022_10K.htm",Verify Intel 2022 operating income fact.
+4,What was AMD's free cash flow in 2024?,calculated,"2,405, 3,041, 636",Verify derived FCF calculation (Operating Cash Flow - Capex).
+5,What was Intel's liabilities-to-equity ratio in 2023?,calculated,"0.81, 81.4, 105,590, 191,572",Verify dynamic liabilities-to-equity ratio computation.
+6,What was NVIDIA's operating margin in 2024?,calculated,"54.12, 54.1",Verify derived operating margin (Operating Income / Revenue).
+7,What reason did Intel give for its lower gross margins in 2024?,narrative,"INTC_2024_10K.htm, gross margin",Verify narrative commentary retrieval on INTC margin drop.
+8,What did AMD management say about their R&D investments in 2024?,narrative,"AMD_2024_10K.htm, R&D, research and development",Verify AMD R&D narrative commentary.
+9,How did NVIDIA's Datacenter segment perform in 2024 according to management?,narrative,"NVDA_2024_10K.htm, datacenter, data center",Verify NVIDIA Datacenter segment growth details.
+10,What was Apple's revenue in 2024?,unanswerable,"cannot answer, sufficient information",Out of company scope: must refuse.
+11,What was NVIDIA's market capitalization in fiscal 2020?,unanswerable,"cannot answer, sufficient information",Out of year scope: must refuse.
+12,What was Intel's exact CPU unit sales volume in 2024?,unanswerable,"cannot answer, sufficient information",Fact not in scope or filings: must refuse.
+13,What was AMD's total employee count in 2020?,unanswerable,"cannot answer, sufficient information",Out of scope: must refuse.
+14,What was Google's net income in 2023?,unanswerable,"cannot answer, sufficient information",Out of scope: must refuse.
+15,What was the weather like in Santa Clara in 2024?,unanswerable,"cannot answer, sufficient information",Completely irrelevant question: must refuse.

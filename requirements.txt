@@ -10,4 +10,5 @@ langchain-community
 chromadb
 sentence-transformers
 python-dotenv
-
+google-generativeai
+langchain-google-genai
