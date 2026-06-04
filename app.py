@@ -652,14 +652,15 @@ with tab_rag:
             
     # User input
     if prompt := st.chat_input("Ask a question about the filings (e.g. 'Why did Intel's margins drop in 2024?')"):
-        # Display user message
-        with st.chat_message("user"):
-            st.write(prompt)
+        # Append user message immediately to session state
         st.session_state.messages.append({"role": "user", "content": prompt})
         
-        # Generate answer
+        # Display user message immediately in chat
+        with st.chat_message("user"):
+            st.write(prompt)
+        
+        # Generate answer and render immediately
         with st.chat_message("assistant"):
-            # Attempt to call Q&A backend
             try:
                 # We dynamically import to check if Q&A is implemented
                 if 'src.rag' not in sys.modules:
@@ -688,3 +689,6 @@ with tab_rag:
                 error_msg = f"An error occurred while generating a response: `{str(e)}`"
                 st.error(error_msg)
                 st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        
+        # Rerun to cleanly re-draw all messages above the chat input box at the bottom of the page
+        st.rerun()
