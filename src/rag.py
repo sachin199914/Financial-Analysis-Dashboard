@@ -319,7 +319,7 @@ def answer_question(question: str) -> str:
             model="gemini-2.5-flash",
             temperature=0.0,
             google_api_key=api_key,
-            transport="rest"
+            max_retries=0
         )
         
         chain = prompt | llm
