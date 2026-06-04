@@ -154,12 +154,24 @@ def metric_input_rows(ticker: str, fiscal_year: int, formula: str) -> pd.DataFra
 
     return pd.DataFrame(inputs).drop_duplicates() if inputs else pd.DataFrame()
 
+def is_explanation_question(question: str) -> bool:
+    query_lower = question.lower()
+    explanation_keywords = [
+        "why", "reason", "explain", "cause", "driver", "driven", "drive", 
+        "attribute", "attribution", "commentary", "discuss", "discussion", 
+        "narrative", "detail", "describe", "description"
+    ]
+    return any(keyword in query_lower for keyword in explanation_keywords)
+
 def answer_from_metric_catalog(question: str, filters: dict) -> str | None:
     """Answer direct quantitative questions without calling the LLM."""
     init_resources()
     if extracted_df is None or derived_df is None:
         return None
     if "ticker" not in filters or "fiscal_year" not in filters:
+        return None
+
+    if is_explanation_question(question):
         return None
 
     requested_metrics = detect_requested_metrics(question)
@@ -305,7 +317,11 @@ def answer_question(question: str) -> str:
         "unrelated/asks about metrics/years outside of the scope, you MUST respond exactly with: "
         "'I cannot answer this question because the provided filings and metric catalogs do not contain sufficient information.' "
         "Do not guess, speculate, or apply any external financial knowledge.\n"
-        "4. Be concise, direct, and professional."
+        "4. Be concise, direct, and professional.\n"
+        "5. For analytical, trend, or 'why' questions (e.g., explaining why a metric like revenue, margin, or capital structure changed), "
+        "you must first state the quantitative change (citing the exact values and calculating/stating the percentage change if present in the context) "
+        "and then summarize management's narrative explanation (primary drivers, segment commentary, and operational factors) "
+        "in clean, structured bullet points with inline citations."
     )
     
     prompt = ChatPromptTemplate.from_messages([
