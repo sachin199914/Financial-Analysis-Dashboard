@@ -268,12 +268,16 @@ def answer_question(question: str) -> str:
     if catalog_answer is not None:
         return catalog_answer
 
-    # Check for Gemini API key
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key or api_key == "your_gemini_api_key_here":
+    # Check for API key (OpenAI or Gemini)
+    api_key_openai = os.environ.get("OPENAI_API_KEY")
+    api_key_gemini = os.environ.get("GEMINI_API_KEY")
+    
+    has_openai = api_key_openai and api_key_openai != "your_openai_api_key_here"
+    has_gemini = api_key_gemini and api_key_gemini != "your_gemini_api_key_here"
+    
+    if not has_openai and not has_gemini:
         raise NotImplementedError(
-            "Gemini API key is not configured. Please add your valid API key in the .env file "
-            "as GEMINI_API_KEY=your_key."
+            "API key is not configured. Please add either GEMINI_API_KEY or OPENAI_API_KEY to your .env file."
         )
         
     init_resources()
@@ -330,13 +334,24 @@ def answer_question(question: str) -> str:
     ])
     
     try:
-        # Load LLM
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            temperature=0.0,
-            google_api_key=api_key,
-            max_retries=0
-        )
+        # Load LLM dynamically
+        if has_openai:
+            from langchain_openai import ChatOpenAI
+            model_name = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
+            llm = ChatOpenAI(
+                model=model_name,
+                temperature=0.0,
+                api_key=api_key_openai,
+                max_retries=0
+            )
+        else:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",
+                temperature=0.0,
+                google_api_key=api_key_gemini,
+                max_retries=0
+            )
         
         chain = prompt | llm
         last_error = None

@@ -191,9 +191,12 @@ QUESTIONS = [
 ]
 
 def main() -> None:
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key or api_key == "your_gemini_api_key_here":
-        print("Error: GEMINI_API_KEY must be populated in the .env file to run evaluation.")
+    api_key_openai = os.environ.get("OPENAI_API_KEY")
+    api_key_gemini = os.environ.get("GEMINI_API_KEY")
+    has_openai = api_key_openai and api_key_openai != "your_openai_api_key_here"
+    has_gemini = api_key_gemini and api_key_gemini != "your_gemini_api_key_here"
+    if not has_openai and not has_gemini:
+        print("Error: GEMINI_API_KEY or OPENAI_API_KEY must be populated in the .env file to run evaluation.")
         return
         
     print("Starting automated evaluation framework...")
