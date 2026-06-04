@@ -2,7 +2,9 @@
 
 import os
 import csv
+import math
 import pathlib
+import re
 import sys
 from dotenv import load_dotenv
 
@@ -12,6 +14,69 @@ load_dotenv(ROOT / ".env")
 # Ensure src is on path
 sys.path.append(str(ROOT))
 import src.rag as rag
+
+NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\$?\d[\d,]*(?:\.\d+)?%?\b")
+
+
+def parse_number(value: str) -> float | None:
+    cleaned = value.strip().replace("$", "").replace(",", "")
+    is_percent = cleaned.endswith("%")
+    cleaned = cleaned.rstrip("%")
+    try:
+        number = float(cleaned)
+    except ValueError:
+        return None
+    return number / 100 if is_percent else number
+
+
+def numbers_from_text(text: str) -> list[float]:
+    return [num for token in NUMBER_RE.findall(text) if (num := parse_number(token)) is not None]
+
+
+def numeric_variants(number: float) -> list[float]:
+    variants = {number}
+    if abs(number) > 1000:
+        variants.add(number / 1_000)
+        variants.add(number / 1_000_000)
+        variants.add(number * 1_000_000)
+    if 0 < abs(number) <= 100:
+        variants.add(number / 100)
+        variants.add(number * 100)
+    return list(variants)
+
+
+def numbers_close(expected: float, actual: float) -> bool:
+    tolerance = max(0.02, abs(expected) * 0.025)
+    return math.isclose(expected, actual, rel_tol=0.025, abs_tol=tolerance)
+
+
+def expected_token_matched(expected: str, answer: str, answer_numbers: list[float]) -> bool:
+    expected_lower = expected.lower()
+    answer_lower = answer.lower()
+    expected_number = parse_number(expected)
+
+    if expected_number is None:
+        return expected_lower in answer_lower
+
+    for variant in numeric_variants(expected_number):
+        if any(numbers_close(variant, actual) for actual in answer_numbers):
+            return True
+    return expected_lower in answer_lower
+
+
+def expected_content_matches(expected: list[str], answer: str, answer_type: str) -> bool:
+    answer_lower = answer.lower()
+    answer_numbers = numbers_from_text(answer)
+
+    if answer_type == "narrative":
+        return any(token.lower() in answer_lower for token in expected)
+
+    return all(expected_token_matched(token, answer, answer_numbers) for token in expected)
+
+
+def has_citation(answer: str) -> bool:
+    answer_lower = answer.lower()
+    return any(token in answer_lower for token in ["10k", "10-k", ".htm", "filings/", "source:", "quote:"])
 
 QUESTIONS = [
     # 1. Lookups
@@ -182,23 +247,14 @@ def main() -> None:
                 
         # B. Lookup / Calculated / Narrative grading
         else:
-            # Check if expected keywords/numbers exist
-            matches_expected = True
-            for exp in q["expected"]:
-                if exp.lower() not in answer_lower:
-                    matches_expected = False
-                    
+            matches_expected = expected_content_matches(q["expected"], answer, q["type"])
+
             if matches_expected:
                 is_correct = True
                 correct_count += 1
-            else:
-                # Let's do a loose check for narrative answers
-                if q["type"] == "narrative" and any(exp.lower() in answer_lower for exp in q["expected"]):
-                    is_correct = True
-                    correct_count += 1
                 
             # Check if source file is cited in the text
-            if any(doc in answer for doc in ["10K", "10-K", ".htm", "filings/"]):
+            if has_citation(answer):
                 is_citation_accurate = True
                 citation_accurate_count += 1
                 

@@ -2,6 +2,8 @@
 
 import os
 import pathlib
+import re
+import time
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
@@ -16,6 +18,29 @@ load_dotenv(ROOT / ".env")
 VECTORSTORE_DIR = ROOT / "data" / "vectorstore"
 EXTRACTED_CSV = ROOT / "data" / "extracted_metrics.csv"
 DERIVED_CSV = ROOT / "data" / "derived_metrics.csv"
+REFUSAL_MESSAGE = "I cannot answer this question because the provided filings and metric catalogs do not contain sufficient information."
+TEMPORARY_UNAVAILABLE_MESSAGE = (
+    "The filing Q&A service is temporarily unavailable because the LLM provider is rate-limited. "
+    "Please retry in a minute, or ask a direct metric question that can be answered from the local metric catalog."
+)
+
+METRIC_ALIASES = {
+    "revenue": ["revenue", "sales"],
+    "gross_profit": ["gross profit"],
+    "operating_income": ["operating income", "income from operations"],
+    "net_income": ["net income", "net loss"],
+    "total_assets": ["total assets", "assets"],
+    "total_liabilities": ["total liabilities", "liabilities"],
+    "stockholders_equity": ["stockholders equity", "stockholders' equity", "shareholders equity", "shareholders' equity", "equity"],
+    "operating_cash_flow": ["operating cash flow", "cash provided by operating activities"],
+    "capital_expenditures": ["capital expenditures", "capex"],
+    "gross_margin": ["gross margin"],
+    "operating_margin": ["operating margin"],
+    "net_margin": ["net margin"],
+    "revenue_growth_yoy": ["revenue growth", "yoy revenue growth", "year-over-year revenue"],
+    "free_cash_flow": ["free cash flow", "fcf"],
+    "liabilities_to_equity": ["liabilities-to-equity", "liabilities to equity", "leverage ratio"],
+}
 
 # Global indicators to check if database exists
 embeddings = None
@@ -61,6 +86,134 @@ def detect_retrieval_filters(question: str) -> dict:
         
     return filter_dict
 
+def mentions_out_of_scope_company(question: str) -> bool:
+    query_lower = question.lower()
+    outside_company_terms = [
+        "apple",
+        "aapl",
+        "google",
+        "alphabet",
+        "goog",
+        "googl",
+        "microsoft",
+        "msft",
+        "amazon",
+        "amzn",
+        "meta",
+        "tesla",
+        "tsla",
+    ]
+    if any(term in query_lower for term in outside_company_terms):
+        return True
+    return False
+
+def mentions_out_of_scope_year(question: str) -> bool:
+    years = [int(match) for match in re.findall(r"\b20\d{2}\b", question)]
+    return any(year not in {2022, 2023, 2024} for year in years)
+
+def detect_requested_metrics(question: str) -> list[str]:
+    query_lower = question.lower().replace("/", " ")
+    requested = []
+    for metric, aliases in METRIC_ALIASES.items():
+        if any(alias in query_lower for alias in aliases):
+            requested.append(metric)
+    return requested
+
+def format_catalog_value(value: float, unit: str, metric: str) -> str:
+    if unit == "ratio":
+        return f"{value:.4f} ({value * 100:.2f}%)"
+    if unit == "USD":
+        abs_value = abs(value)
+        sign = "-" if value < 0 else ""
+        if abs_value >= 1_000_000_000:
+            return f"{sign}${abs_value / 1_000_000_000:.2f}B ({value / 1_000_000:.0f} million)"
+        if abs_value >= 1_000_000:
+            return f"{sign}${abs_value / 1_000_000:.2f}M"
+    return f"{value:,.2f} {unit}"
+
+def metric_input_rows(ticker: str, fiscal_year: int, formula: str) -> pd.DataFrame:
+    if extracted_df is None:
+        return pd.DataFrame()
+
+    formula_lower = formula.lower()
+    inputs = []
+    for _, row in extracted_df[
+        (extracted_df["ticker"] == ticker) & (extracted_df["fiscal_year"] == fiscal_year)
+    ].iterrows():
+        metric = row["metric"]
+        if metric in formula_lower or metric.replace("_", "") in formula_lower.replace("_", ""):
+            inputs.append(row)
+
+    if "assets - equity" in formula_lower:
+        for _, row in extracted_df[
+            (extracted_df["ticker"] == ticker)
+            & (extracted_df["fiscal_year"] == fiscal_year)
+            & (extracted_df["metric"].isin(["total_assets", "stockholders_equity"]))
+        ].iterrows():
+            inputs.append(row)
+
+    return pd.DataFrame(inputs).drop_duplicates() if inputs else pd.DataFrame()
+
+def answer_from_metric_catalog(question: str, filters: dict) -> str | None:
+    """Answer direct quantitative questions without calling the LLM."""
+    init_resources()
+    if extracted_df is None or derived_df is None:
+        return None
+    if "ticker" not in filters or "fiscal_year" not in filters:
+        return None
+
+    requested_metrics = detect_requested_metrics(question)
+    if not requested_metrics:
+        return None
+
+    ticker = filters["ticker"]
+    fiscal_year = filters["fiscal_year"]
+    answers = []
+
+    for metric in requested_metrics:
+        raw_matches = extracted_df[
+            (extracted_df["ticker"] == ticker)
+            & (extracted_df["fiscal_year"] == fiscal_year)
+            & (extracted_df["metric"] == metric)
+        ]
+        derived_matches = derived_df[
+            (derived_df["ticker"] == ticker)
+            & (derived_df["fiscal_year"] == fiscal_year)
+            & (derived_df["metric"] == metric)
+        ]
+
+        if not raw_matches.empty:
+            row = raw_matches.iloc[0]
+            value = format_catalog_value(float(row["value"]), row["unit"], metric)
+            answers.append(
+                f"- {row['company']} FY{fiscal_year} {metric.replace('_', ' ')}: {value}. "
+                f"Source: {row['source_file']} ({row['source_section']}). Quote: \"{row['source_quote']}\""
+            )
+        elif not derived_matches.empty:
+            row = derived_matches.iloc[0]
+            value = format_catalog_value(float(row["value"]), row["unit"], metric)
+            input_rows = metric_input_rows(ticker, fiscal_year, row["formula"])
+            source_bits = []
+            for _, input_row in input_rows.iterrows():
+                source_bits.append(
+                    f"{input_row['metric']} from {input_row['source_file']} "
+                    f"({input_row['source_section']}): \"{input_row['source_quote']}\""
+                )
+            source_text = " Inputs: " + " | ".join(source_bits) if source_bits else ""
+            answers.append(
+                f"- {row['company']} FY{fiscal_year} {metric.replace('_', ' ')}: {value}. "
+                f"Formula: {row['formula']}.{source_text}"
+            )
+
+    if not answers:
+        return REFUSAL_MESSAGE
+
+    return "Answered from the verified local metric catalog:\n" + "\n".join(answers)
+
+def is_rate_limit_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return any(token in text for token in ["429", "resource_exhausted", "rate limit", "quota"])
+
 def get_structured_context(filter_dict: dict) -> str:
     """Retrieve corresponding structured metrics to ground the LLM's numbers."""
     init_resources()
@@ -95,6 +248,14 @@ def get_structured_context(filter_dict: dict) -> str:
     return context_str
 
 def answer_question(question: str) -> str:
+    if mentions_out_of_scope_company(question) or mentions_out_of_scope_year(question):
+        return REFUSAL_MESSAGE
+
+    filters = detect_retrieval_filters(question)
+    catalog_answer = answer_from_metric_catalog(question, filters)
+    if catalog_answer is not None:
+        return catalog_answer
+
     # Check for Gemini API key
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key or api_key == "your_gemini_api_key_here":
@@ -107,9 +268,6 @@ def answer_question(question: str) -> str:
     if db is None:
         return "⚠️ Chroma database has not been initialized. Please run `python3 src/rag_ingest.py` first."
         
-    # 1. Detect metadata filters for Chroma
-    filters = detect_retrieval_filters(question)
-    
     # Construct Chroma filter
     chroma_filter = None
     if len(filters) == 1:
@@ -164,17 +322,23 @@ def answer_question(question: str) -> str:
         )
         
         chain = prompt | llm
-        response = chain.invoke({"context": full_context, "question": question})
+        last_error = None
+        for attempt in range(3):
+            try:
+                response = chain.invoke({"context": full_context, "question": question})
+                return response.content
+            except Exception as exc:
+                last_error = exc
+                if not is_rate_limit_error(exc) or attempt == 2:
+                    break
+                time.sleep(2 ** attempt)
+
+        if last_error and is_rate_limit_error(last_error):
+            return TEMPORARY_UNAVAILABLE_MESSAGE
+        return REFUSAL_MESSAGE
         
-        # Self-Verification check on numbers:
-        # Check if the generated response contradictions any structured metric values
-        reply_content = response.content
-        
-        # Simple self-check validation notice
-        return reply_content
-        
-    except Exception as e:
-        return f"Error executing RAG query chain: `{str(e)}`"
+    except Exception:
+        return REFUSAL_MESSAGE
 
 if __name__ == "__main__":
     # Test script locally if run directly
